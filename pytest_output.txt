@@ -1,0 +1,55 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.6, pytest-8.4.1, pluggy-1.6.0
+rootdir: /Users/aydenwayman/Coursework/SE-3150/testing_systems
+plugins: describe-2.2.0, mock-3.15.1, spec-5.0.0
+collected 20 items
+
+test_mydb_system.py:
+
+Mydb:
+
+  Init:
+    ✓ It creates file and assigns name
+
+  LoadStrings:
+    ✓ It returns empty list for new db
+
+  SaveString:
+    ✓ It appends to existing list
+    ✓ It creates file and appends if missing
+
+  SaveStrings:
+    ✓ It writes array and loads it back
+
+test_squirrel_server_system.py:
+
+Squirrel api:
+
+  Delete:
+    ✓ It deletes and makes record inaccessible
+    ✓ It returns 404 for nonexistent
+
+  Failure cases:
+    ✓ It returns 404 for nonexistent id
+    ✓ It returns 404 for invalid path
+    ✓ It rejects post to specific id
+    ✓ It rejects delete on collection
+    ✓ It handles unknown methods
+
+  Get collection:
+    ✓ It returns empty list
+
+  Multiple entries:
+    ✓ It creates multiple and lists them
+    ✓ It runs full lifecycle
+
+  Post:
+    ✓ It creates and is reflected in get
+    ✓ It rejects missing fields
+
+  Put:
+    ✓ It updates existing
+    ✓ It rejects missing fields
+    ✓ It returns 404 for nonexistent
+
+============================== 20 passed in 2.34s ==============================

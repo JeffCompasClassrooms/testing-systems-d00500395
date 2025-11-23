@@ -25,11 +25,56 @@ def wait_for_port(host, port, timeout=5.0):
             time.sleep(0.05)
     return False
 
+# --- NEW HELPER FUNCTION TO KILL EXISTING PROCESS ---
+def kill_process_on_port(port):
+    """Finds and kills the process running on the given port using lsof and kill (macOS/Linux)."""
+    try:
+        # Use lsof -t -i :<port> to find the PID(s) using the port
+        lsof_output = subprocess.check_output(
+            ['lsof', '-t', '-i', f'tcp:{port}'],
+            stderr=subprocess.PIPE
+        ).decode().strip()
+
+        if lsof_output:
+            pids = lsof_output.split('\n')
+            print(f"\n[INFO] Found PIDs running on port {port}: {', '.join(pids)}. Attempting to kill.")
+            
+            # Kill the processes using 'kill -9' (SIGKILL)
+            for pid in pids:
+                if pid:
+                    subprocess.run(['kill', '-9', pid], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            
+            # Give the OS a moment to release the port
+            time.sleep(1) 
+            return True
+        
+    except subprocess.CalledProcessError:
+        # This usually means no process was found, which is fine
+        pass
+    except Exception as e:
+        print(f"\n[ERROR] Failed to execute kill command: {e}")
+        return False
+        
+    return False
+# ----------------------------------------------------
+
+
 @pytest.fixture(scope="session", autouse=True)
 def start_server():
     host, port = "127.0.0.1", 8080
+    
+    # --- MODIFIED LOGIC: KILL BEFORE STARTING ---
     if wait_for_port(host, port, timeout=0.2):
-        pytest.skip("Port busy")
+        print(f"\n[INFO] Port {port} is busy. Killing existing server...")
+        if not kill_process_on_port(port):
+            # If the kill command fails (e.g., permission issues), skip the test
+            pytest.skip(f"Port {port} busy and automatic kill failed. Skipping.")
+        
+        # Check again to ensure the port is now free after the kill attempt
+        if wait_for_port(host, port, timeout=1.0):
+            pytest.skip(f"Port {port} is still busy after attempted kill. Skipping.")
+    # ------------------------------------------
+    
     proc = subprocess.Popen(
         ["python3", SERVER_SCRIPT],
         stdout=subprocess.PIPE,
@@ -191,7 +236,10 @@ def describe_squirrel_api():
             assert resp.status == 404
 
         def it_rejects_post_to_specific_id(http_client):
-            resp, _ = post_form(http_client, "/squirrels/1", {"name": "X", "size": "Y"})
+            http_client.request("POST", "/squirrels/1", body=None)
+            resp = http_client.getresponse()
+            resp.read() # Consume response body for client cleanup
+            
             assert resp.status in (404, 405)
 
         def it_rejects_delete_on_collection(http_client):
