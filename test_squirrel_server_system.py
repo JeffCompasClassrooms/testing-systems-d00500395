@@ -175,7 +175,7 @@ def describe_squirrel_api():
             try:
                 resp3, _ = put_form(http_client, f"/squirrels/{sid}", {"name": "Only"})
                 # If server DOES respond, it must be an error
-                assert resp3.status >= 400
+                assert resp3.status > 400
             except RemoteDisconnected:
                 # Server closing the connection is acceptable as an error condition
                 pass
@@ -200,9 +200,10 @@ def describe_squirrel_api():
 
             try:
                 resp3, _ = put_form(http_client, f"/squirrels/{sid}", {"name": "Only"})
-                assert resp3.status >= 400
+                assert resp3.status > 400
             except RemoteDisconnected:
                 pass
+                print("Failure Detected")
 
         def it_returns_404_for_nonexistent(http_client):
             resp, _ = put_form(http_client, "/squirrels/9999", {"name": "X", "size": "Y"})

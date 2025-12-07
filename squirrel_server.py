@@ -90,8 +90,26 @@ class SquirrelServerHandler(BaseHTTPRequestHandler):
 
     def handleSquirrelsCreate(self):
         db = SquirrelDB()
-        body = self.getRequestData()
-        db.createSquirrel(body["name"], body["size"])
+        # Read and validate request data. Missing or empty fields -> 400 Bad Request
+        try:
+            body = self.getRequestData()
+        except Exception:
+            self.send_response(400)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(bytes("400 Bad Request", "utf-8"))
+            return
+
+        name = body.get("name")
+        size = body.get("size")
+        if not name or not size:
+            self.send_response(400)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(bytes("400 Bad Request", "utf-8"))
+            return
+
+        db.createSquirrel(name, size)
         self.send_response(201)
         self.end_headers()
 
@@ -99,8 +117,26 @@ class SquirrelServerHandler(BaseHTTPRequestHandler):
         db = SquirrelDB()
         squirrel = db.getSquirrel(squirrelId)
         if squirrel:
-            body = self.getRequestData()
-            db.updateSquirrel(squirrelId, body["name"], body["size"])
+            # Read and validate request data. Missing or empty fields -> 400 Bad Request
+            try:
+                body = self.getRequestData()
+            except Exception:
+                self.send_response(400)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(bytes("400 Bad Request", "utf-8"))
+                return
+
+            name = body.get("name")
+            size = body.get("size")
+            if not name or not size:
+                self.send_response(400)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(bytes("400 Bad Request", "utf-8"))
+                return
+
+            db.updateSquirrel(squirrelId, name, size)
             self.send_response(204)
             self.end_headers()
         else:
